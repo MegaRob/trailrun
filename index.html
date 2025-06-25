@@ -8,62 +8,95 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Chosen Palette: Ocean & Sunset (Deep Teal, Soft Coral, Light Greys) -->
-    <!-- Application Structure Plan: A tab-based SPA design is chosen for optimal user navigation. It avoids a long scroll and allows users to jump directly to task-oriented sections: 'Why Strength Matters' (Home), 'Core Principles', an interactive 'Exercise Library', and a 'Plan & Schedule' visualizer. This structure breaks down the dense report into digestible, interactive modules, making the information more accessible and actionable for a trail runner who may want to quickly find specific exercises or scheduling advice without reading the entire document linearly. -->
-    <!-- Visualization & Content Choices: The application uses a combination of interactive elements to represent the report's content. A Radar Chart visualizes the five key components of fitness, offering a quick summary. A Bar Chart illustrates the abstract concept of periodization (volume vs. intensity), making it easier to understand. The core of the app is a filterable grid of exercise cards, allowing users to 'Organize' and 'Compare' exercises based on their goals (e.g., core, plyometrics). This interactive list (HTML/JS) is more user-friendly than the static lists in the report. Static text blocks are used for principles and summaries, presented in a clean card layout. This multi-faceted approach supports the designed task-oriented structure. The 'Plan & Schedule' section now includes an interactive "Works to be Done" checklist, enabling users to mark their daily workouts as complete, and the ability to click each day to view a detailed list of exercises. -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Fresh & Dynamic (Light Grey, Deep Blue-Green, Bright Coral) -->
+    <!-- Application Structure Plan: This new UI/UX features a clean, single-page scrollable layout with prominent visual sections. A fixed, minimalist header provides quick access to the brand and smooth-scrolling navigation links. For mobile, a hamburger icon opens a full-screen, vibrant navigation overlay. Content is organized into distinct, card-based modules with subtle alternating background shades to enhance visual separation. Emphasis is placed on modern typography, generous white space, and refined card designs with subtle interactions. The goal is to create an energetic yet clear and easy-to-digest experience. -->
+    <!-- Visualization & Content Choices: Key benefits are highlighted with bold, large unicode icons and concise descriptions. Foundational principles and exercise details are presented in clean, consistently styled cards. The Exercise Library features a contemporary filter bar and a dynamic grid of exercise cards. The Training Periodization is visualized with a Chart.js bar chart, and the Weekly Schedule utilizes collapsible cards for detailed daily workouts. All charts are designed for responsiveness and dynamic updates, with colors harmonized with the new palette. NO SVG graphics are used beyond the custom icon, and NO Mermaid JS is used. -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #F8F8F8; /* Light neutral grey */
-            color: #333C40; /* Dark muted grey-blue for text */
+            background-color: #F8FBF8; /* Very light, cool grey-green */
+            color: #2F4858; /* Deep blue-grey for primary text */
+        }
+        .header-bg {
+            background-color: #FFFFFF;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.06);
         }
         .nav-link {
             transition: all 0.3s ease;
             cursor: pointer;
-            border-bottom: 2px solid transparent;
+            position: relative;
+            padding: 8px 12px;
+            border-radius: 8px;
+            color: #556B7B; /* Muted blue-grey for nav links */
+            font-weight: 500;
         }
-        .nav-link.active {
-            color: #008080; /* Deep Teal accent */
-            border-bottom-color: #008080;
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 50%;
+            background-color: #FF6B6B; /* Bright Coral accent */
+            transition: all 0.3s ease-in-out;
+            transform: translateX(-50%);
         }
-        .nav-link:not(.active):hover {
-            color: #4CAF50; /* Green for hover, complementing teal */
-            border-bottom-color: #4CAF50;
+        .nav-link.active,
+        .nav-link:hover {
+            color: #2F4858; /* Darker text for active/hover */
         }
-        .content-section {
-            display: none;
+        .nav-link.active::after,
+        .nav-link:hover::after {
+            width: 100%;
         }
-        .content-section.active {
-            display: block;
+        .section-padding {
+            padding-top: 7rem;
+            padding-bottom: 7rem;
         }
-        .exercise-card {
+        .card {
+            background-color: #FFFFFF;
+            border-radius: 1.25rem; /* Even more rounded */
+            box-shadow: 0 12px 30px rgba(0,0,0,0.08); /* Stronger, softer shadow */
+            border: 1px solid #EAEAEA; /* Very light grey border */
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-        .exercise-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        .card:hover {
+            transform: translateY(-7px);
+            box-shadow: 0 18px 45px rgba(0,0,0,0.15);
         }
         .filter-btn {
             transition: all 0.2s ease-in-out;
+            background-color: #EBF2F0; /* Very light blue-green */
+            color: #556B7B; /* Muted blue-grey text */
+            font-weight: 500;
+            border: none;
+            padding: 0.9rem 2rem; /* Larger padding */
+            border-radius: 9999px; /* Fully rounded */
+            cursor: pointer;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.08);
         }
         .filter-btn.active {
-            background-color: #006666 !important; /* Darker Teal for active filter */
-            color: #F8F8F8 !important;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            background-color: #1A5276 !important; /* Deep Blue-Green for active filter */
+            color: #FFFFFF !important;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.25);
+        }
+        .filter-btn:hover:not(.active) {
+            background-color: #DDEEE8;
+            color: #2F4858;
         }
         .chart-container {
             position: relative;
             margin: auto;
-            height: 40vh;
+            height: 48vh; /* Taller charts */
             width: 100%;
-            max-width: 500px;
-            max-height: 400px;
+            max-width: 750px; /* Wider charts */
+            max-height: 550px;
         }
         @media (min-width: 768px) {
             .chart-container {
-                height: 350px;
+                height: 450px;
             }
         }
         .workout-item .summary {
@@ -71,12 +104,22 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding: 1.5rem; /* More padding */
+            border-radius: 1rem;
+            background-color: #FCFCFC; /* Clean white background for list items */
+            box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+            transition: all 0.2s ease-in-out;
+        }
+        .workout-item .summary:hover {
+            background-color: #F0F5F5; /* Very light blue-grey hover */
         }
         .exercise-detail-list {
             display: none;
-            margin-top: 1rem;
-            padding-top: 1rem;
-            border-top: 1px solid #e0e0e0;
+            margin-top: 1.25rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid #F0F0F0; /* Lighter border */
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
         }
         .exercise-detail-list.active {
             display: block;
@@ -87,148 +130,252 @@
         .toggle-icon.rotated {
             transform: rotate(90deg);
         }
+
+        /* Mobile Menu Overlay */
+        .mobile-menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #1A5276; /* Deep Blue-Green for full overlay */
+            z-index: 90;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-100%); /* Starts off-screen above */
+            transition: transform 0.4s ease-in-out, opacity 0.4s ease, visibility 0.4s ease;
+        }
+        .mobile-menu-overlay.open {
+            transform: translateY(0);
+            opacity: 1;
+            visibility: visible;
+        }
+        .mobile-menu-content {
+            padding: 2rem;
+            text-align: center;
+        }
+        .mobile-menu-content a {
+            display: block;
+            padding: 1.25rem 0;
+            font-size: 2rem;
+            color: #FFFFFF;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+        .mobile-menu-content a:hover {
+            color: #FF6B6B; /* Bright Coral on hover */
+        }
+        .mobile-menu-close-btn {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: none;
+            border: none;
+            font-size: 2.5rem;
+            cursor: pointer;
+            color: #FFFFFF;
+            z-index: 100;
+        }
+
+        /* Hamburger Icon */
+        .hamburger-icon {
+            display: none;
+            cursor: pointer;
+            padding: 5px;
+            z-index: 100;
+        }
+        .hamburger-icon span {
+            display: block;
+            width: 30px; /* Slightly larger */
+            height: 3px;
+            background-color: #2F4858; /* Deep blue-grey */
+            margin: 6px 0;
+            transition: all 0.3s ease;
+        }
+        .hamburger-icon.open span {
+            background-color: #FFFFFF; /* White when menu is open */
+        }
+        .hamburger-icon.open span:nth-child(1) {
+            transform: translateY(9px) rotate(45deg);
+        }
+        .hamburger-icon.open span:nth-child(2) {
+            opacity: 0;
+        }
+        .hamburger-icon.open span:nth-child(3) {
+            transform: translateY(-9px) rotate(-45deg);
+        }
+
+        @media (max-width: 767px) {
+            .desktop-nav {
+                display: none;
+            }
+            .hamburger-icon {
+                display: block;
+            }
+        }
     </style>
 </head>
 <body class="antialiased">
 
-    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
-        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center">
-                    <!-- Logo SVG -->
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="mr-2">
-                        <path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" fill="#008080"/>
-                        <path d="M12 4.472L4 8.736V15.264L12 19.528L20 15.264V8.736L12 4.472Z" fill="#006666"/>
-                        <path d="M12 7.056L17.5 9.828L12 12.556L6.5 9.828L12 7.056Z" fill="#FF7F50"/>
-                        <path d="M12 13.444L6.5 16.172L12 18.944L17.5 16.172L12 13.444Z" fill="#FF7F50" fill-opacity="0.7"/>
-                    </svg>
-                    <span class="text-xl font-bold text-[#006666]">Trail Strong</span>
+    <header class="fixed top-0 left-0 w-full z-50 header-bg py-4">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+            <div class="flex items-center">
+                <!-- Logo SVG: Abstract Mountain Range with Runner -->
+                <svg width="40" height="40" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" class="mr-4">
+                    <!-- Base mountain shape -->
+                    <path d="M50 10 L10 90 L90 90 Z" fill="#1A5276"/>
+                    <!-- Second mountain layer -->
+                    <path d="M50 25 L20 85 L80 85 Z" fill="#2F4858"/>
+                    <!-- Smallest mountain peak -->
+                    <path d="M50 40 L35 70 L65 70 Z" fill="#556B7B"/>
+                    <!-- Runner figure -->
+                    <circle cx="65" cy="55" r="5" fill="#FF6B6B"/> <!-- Head -->
+                    <path d="M65 60 L60 75 L70 75 Z" fill="#FF6B6B"/> <!-- Body -->
+                    <path d="M62 70 L58 80 L62 82 L66 72 Z" fill="#FF6B6B"/> <!-- Front Leg -->
+                    <path d="M68 70 L64 78 L68 80 L72 70 Z" fill="#FF6B6B"/> <!-- Back Leg -->
+                </svg>
+                <span class="text-3xl font-bold text-[#2F4858]">Trail Strong</span>
+            </div>
+            
+            <!-- Desktop Navigation -->
+            <div class="hidden md:block desktop-nav">
+                <div class="flex items-baseline space-x-12 text-xl">
+                    <a href="#home" class="nav-link active">Home</a>
+                    <a href="#principles" class="nav-link">Principles</a>
+                    <a href="#library" class="nav-link">Exercises</a>
+                    <a href="#schedule" class="nav-link">Plan</a>
                 </div>
-                <div class="hidden md:block">
-                    <div class="ml-10 flex items-baseline space-x-4">
-                        <a data-target="home" class="nav-link px-3 py-2 rounded-md text-sm font-medium active">Why Strength Matters</a>
-                        <a data-target="principles" class="nav-link px-3 py-2 rounded-md text-sm font-medium">Core Principles</a>
-                        <a data-target="library" class="nav-link px-3 py-2 rounded-md text-sm font-medium">Exercise Library</a>
-                        <a data-target="schedule" class="nav-link px-3 py-2 rounded-md text-sm font-medium">Plan & Schedule</a>
-                    </div>
-                </div>
-                 <div class="md:hidden">
-                    <select id="mobile-nav" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-[#006666] focus:border-[#006666] block w-full p-2.5">
-                        <option value="home">Why Strength Matters</option>
-                        <option value="principles">Core Principles</option>
-                        <option value="library">Exercise Library</option>
-                        <option value="schedule">Plan & Schedule</option>
-                    </select>
-                </div>
+            </div>
+
+            <!-- Hamburger Icon for Mobile -->
+            <div class="md:hidden hamburger-icon" id="hamburger-icon">
+                <span></span>
+                <span></span>
+                <span></span>
             </div>
         </nav>
     </header>
 
-    <main class="container mx-auto p-4 sm:p-6 lg:p-8">
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-menu-overlay" class="mobile-menu-overlay">
+        <div class="mobile-menu-content">
+            <button class="mobile-menu-close-btn" id="mobile-menu-close-btn">&times;</button>
+            <a href="#home" class="mobile-nav-link">Home</a>
+            <a href="#principles" class="mobile-nav-link">Principles</a>
+            <a href="#library" class="mobile-nav-link">Exercises</a>
+            <a href="#schedule" class="mobile-nav-link">Plan</a>
+        </div>
+    </div>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 mt-28">
         
-        <section id="home" class="content-section active">
-            <div class="text-center mb-12">
-                <h1 class="text-4xl md:text-5xl font-bold tracking-tight text-[#333C40] mb-4">Build a More Resilient Trail Runner</h1>
-                <p class="max-w-3xl mx-auto text-lg text-gray-600">Strength training isn't just an add-on; it's fundamental to improving performance, enhancing durability, and preventing injuries on the trail. This guide translates complex principles into actionable steps.</p>
+        <section id="home" class="section-padding">
+            <div class="text-center max-w-5xl mx-auto mb-24">
+                <h1 class="text-6xl md:text-7xl font-extrabold tracking-tight text-[#2F4858] mb-10 leading-tight">Build a More Resilient Trail Runner</h1>
+                <p class="text-xl md:text-2xl text-gray-700 leading-relaxed max-w-4xl mx-auto">Strength training isn't just an add-on; it's fundamental to improving performance, enhancing durability, and preventing injuries on the trail. This guide translates complex principles into actionable steps for every trail runner.</p>
             </div>
 
-            <div class="grid md:grid-cols-3 gap-8 mb-12 text-center">
-                <div class="bg-white p-6 rounded-lg shadow-sm">
-                    <div class="text-4xl mb-3 text-[#FF7F50]">▲</div>
-                    <h3 class="text-xl font-semibold mb-2 text-[#008080]">Enhanced Performance</h3>
-                    <p class="text-gray-600">Improve running economy, power up hills, and master technical descents with targeted strength work.</p>
+            <div class="grid md:grid-cols-3 gap-14 max-w-7xl mx-auto mb-24">
+                <div class="card p-10 text-center">
+                    <div class="text-7xl mb-6 text-[#FF6B6B]">📈</div>
+                    <h3 class="text-3xl font-semibold mb-4 text-[#2F4858]">Enhanced Performance</h3>
+                    <p class="text-gray-600 text-lg leading-relaxed">Improve running economy, power up hills, and master technical descents with targeted strength work.</p>
                 </div>
-                <div class="bg-white p-6 rounded-lg shadow-sm">
-                     <div class="text-4xl mb-3 text-[#FF7F50]">⛨</div>
-                    <h3 class="text-xl font-semibold mb-2 text-[#008080]">Greater Durability</h3>
-                    <p class="text-gray-600">Build a robust body that resists fatigue, absorbs impact, and withstands the cumulative stress of long runs.</p>
+                <div class="card p-10 text-center">
+                     <div class="text-7xl mb-6 text-[#FF6B6B]">⛰️</div>
+                    <h3 class="text-3xl font-semibold mb-4 text-[#2F4858]">Greater Durability</h3>
+                    <p class="text-gray-600 text-lg leading-relaxed">Build a robust body that resists fatigue, absorbs impact, and withstands the cumulative stress of long runs.</p>
                 </div>
-                <div class="bg-white p-6 rounded-lg shadow-sm">
-                    <div class="text-4xl mb-3 text-[#FF7F50]">✚</div>
-                    <h3 class="text-xl font-semibold mb-2 text-[#008080]">Reduced Injury Risk</h3>
-                    <p class="text-gray-600">Strengthen key muscles and stabilize joints to correct imbalances and protect against common running injuries.</p>
+                <div class="card p-10 text-center">
+                    <div class="text-7xl mb-6 text-[#FF6B6B]">🧘</div>
+                    <h3 class="text-3xl font-semibold mb-4 text-[#2F4858]">Reduced Injury Risk</h3>
+                    <p class="text-gray-600 text-lg leading-relaxed">Strengthen key muscles and stabilize joints to correct imbalances and protect against common running injuries.</p>
                 </div>
             </div>
             
-            <div class="bg-white p-6 md:p-8 rounded-lg shadow-md">
-                 <h2 class="text-2xl font-bold text-center text-[#333C40] mb-2">Your Trail Fitness Profile</h2>
-                 <p class="text-center text-gray-600 max-w-2xl mx-auto mb-6">A balanced trail runner needs a combination of five key physical components. This interactive chart visualizes these areas. Our exercise library is designed to help you strengthen each one.</p>
+            <div class="card p-12 md:p-16 max-w-5xl mx-auto">
+                 <h2 class="text-4xl md:text-5xl font-bold text-center text-[#2F4858] mb-8">Your Trail Fitness Profile: The 5 Key Components</h2>
+                 <p class="text-center text-gray-700 text-xl max-w-3xl mx-auto mb-12 leading-relaxed">A balanced trail runner needs a combination of five key physical components. This chart visualizes their importance, and our exercise library is designed to help you strengthen each one for holistic development.</p>
                 <div class="chart-container">
                     <canvas id="fitnessComponentsChart"></canvas>
                 </div>
             </div>
         </section>
 
-        <section id="principles" class="content-section">
-             <div class="text-center mb-12">
-                <h1 class="text-4xl md:text-5xl font-bold tracking-tight text-[#333C40] mb-4">Foundational Training Principles</h1>
-                <p class="max-w-3xl mx-auto text-lg text-gray-600">Effective, long-term progress is built on a few core concepts. Understanding these principles allows you to train smarter, ensuring every workout moves you closer to your goals safely.</p>
+        <section id="principles" class="section-padding" style="background-color: #EDF4F5;">
+             <div class="text-center max-w-5xl mx-auto mb-24">
+                <h1 class="text-5xl md:text-6xl font-bold tracking-tight text-[#2F4858] mb-10">Foundational Training Principles</h1>
+                <p class="text-xl md:text-2xl text-gray-700 leading-relaxed max-w-4xl mx-auto">Effective, long-term progress is built on a few core concepts. Understanding these principles allows you to train smarter, ensuring every workout moves you closer to your goals safely and efficiently.</p>
             </div>
-             <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div class="bg-white p-6 rounded-lg shadow-sm">
-                    <h3 class="text-xl font-semibold mb-2 text-[#008080]">Progressive Overload</h3>
-                    <p class="text-gray-600">The body must be consistently challenged with increasing demands to adapt and grow stronger. This can be achieved by adding weight, reps, or decreasing rest time.</p>
+             <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-10 max-w-7xl mx-auto">
+                <div class="card p-10">
+                    <h3 class="text-2xl font-semibold mb-3 text-[#1A5276]">Progressive Overload</h3>
+                    <p class="text-gray-600 text-lg leading-relaxed">The body must be consistently challenged with increasing demands to adapt and grow stronger. This can be achieved by adding weight, reps, or decreasing rest time.</p>
                 </div>
-                 <div class="bg-white p-6 rounded-lg shadow-sm">
-                    <h3 class="text-xl font-semibold mb-2 text-[#008080]">Specificity</h3>
-                    <p class="text-gray-600">Training adaptations are specific to the stress imposed. Exercises should mimic the biomechanical and metabolic demands of trail running, focusing on unilateral movements.</p>
+                 <div class="card p-10">
+                    <h3 class="text-2xl font-semibold mb-3 text-[#1A5276]">Specificity</h3>
+                    <p class="text-gray-600 text-lg leading-relaxed">Training adaptations are specific to the stress imposed. Exercises should mimic the biomechanical and metabolic demands of trail running, focusing on unilateral movements.</p>
                 </div>
-                <div class="bg-white p-6 rounded-lg shadow-sm">
-                    <h3 class="text-xl font-semibold mb-2 text-[#008080]">Individualization</h3>
-                    <p class="text-gray-600">Every athlete is unique. A training program must be tailored to an individual's strengths, weaknesses, training history, and recovery capacity to be effective.</p>
+                <div class="card p-10">
+                    <h3 class="text-2xl font-semibold mb-3 text-[#1A5276]">Individualization</h3>
+                    <p class="text-gray-600 text-lg leading-relaxed">Every athlete is unique. A training program must be tailored to an individual's strengths, weaknesses, training history, and recovery capacity to be effective.</p>
                 </div>
-                <div class="bg-white p-6 rounded-lg shadow-sm">
-                    <h3 class="text-xl font-semibold mb-2 text-[#008080]">Recovery</h3>
-                    <p class="text-gray-600">Recovery is not passive; it's an active and indispensable component of progress. It's during rest that the body repairs, adapts, and gets stronger.</p>
+                <div class="card p-10">
+                    <h3 class="text-2xl font-semibold mb-3 text-[#1A5276]">Recovery</h3>
+                    <p class="text-gray-600 text-lg leading-relaxed">Recovery is not passive; it's an active and indispensable component of progress. It's during rest that the body repairs, adapts, and gets stronger.</p>
                 </div>
-                 <div class="bg-white p-6 rounded-lg shadow-sm">
-                    <h3 class="text-xl font-semibold mb-2 text-[#008080]">Periodization</h3>
-                    <p class="text-gray-600">A structured approach that varies training load and intensity over specific periods to optimize performance, prevent overtraining, and ensure continuous progress.</p>
+                 <div class="card p-10">
+                    <h3 class="text-2xl font-semibold mb-3 text-[#1A5276]">Periodization</h3>
+                    <p class="text-gray-600 text-lg leading-relaxed">A structured approach that varies training load and intensity over specific periods to optimize performance, prevent overtraining, and ensure continuous progress.</p>
                 </div>
-                 <div class="bg-white p-6 rounded-lg shadow-sm">
-                    <h3 class="text-xl font-semibold mb-2 text-[#008080]">Kinetic Chain</h3>
-                    <p class="text-gray-600">The body functions as an integrated system. Strength in the feet, ankles, knees, hips, and core must work together for efficient, injury-free running.</p>
+                 <div class="card p-10">
+                    <h3 class="text-2xl font-semibold mb-3 text-[#1A5276]">Kinetic Chain</h3>
+                    <p class="text-gray-600 text-lg leading-relaxed">The body functions as an integrated system. Strength in the feet, ankles, knees, hips, and core must work together for efficient, injury-free running.</p>
                 </div>
             </div>
         </section>
 
-        <section id="library" class="content-section">
-             <div class="text-center mb-8">
-                <h1 class="text-4xl md:text-5xl font-bold tracking-tight text-[#333C40] mb-4">Interactive Exercise Library</h1>
-                <p class="max-w-3xl mx-auto text-lg text-gray-600">Find the right exercises for your needs. Use the filters below to explore movements that build core stability, lower body power, eccentric control, explosive agility, and balance.</p>
+        <section id="library" class="section-padding">
+             <div class="text-center max-w-5xl mx-auto mb-24">
+                <h1 class="text-5xl md:text-6xl font-bold tracking-tight text-[#2F4858] mb-10">Interactive Exercise Library</h1>
+                <p class="text-xl md:text-2xl text-gray-700 leading-relaxed max-w-4xl mx-auto">Find the right exercises for your needs. Use the filters below to explore movements that build core stability, lower body power, eccentric control, explosive agility, and balance – essential for conquering any trail.</p>
             </div>
             
-            <div id="filter-container" class="flex flex-wrap justify-center gap-2 mb-8">
-                 <button data-filter="all" class="filter-btn active bg-white text-[#006666] font-medium py-2 px-4 rounded-full border border-gray-200 hover:bg-gray-100">All Exercises</button>
-                 <button data-filter="core" class="filter-btn bg-white text-[#006666] font-medium py-2 px-4 rounded-full border border-gray-200 hover:bg-gray-100">Core Stability</button>
-                 <button data-filter="lower" class="filter-btn bg-white text-[#006666] font-medium py-2 px-4 rounded-full border border-gray-200 hover:bg-gray-100">Lower Body</button>
-                 <button data-filter="eccentric" class="filter-btn bg-white text-[#006666] font-medium py-2 px-4 rounded-full border border-gray-200 hover:bg-gray-100">Eccentric (Downhill)</button>
-                 <button data-filter="plyo" class="filter-btn bg-white text-[#006666] font-medium py-2 px-4 rounded-full border border-gray-200 hover:bg-gray-100">Plyometrics (Power)</button>
-                 <button data-filter="balance" class="filter-btn bg-white text-[#006666] font-medium py-2 px-4 rounded-full border border-gray-200 hover:bg-gray-100">Balance & Proprioception</button>
+            <div id="filter-container" class="flex flex-wrap justify-center gap-4 mb-16">
+                 <button data-filter="all" class="filter-btn active">All Exercises</button>
+                 <button data-filter="core" class="filter-btn">Core Stability</button>
+                 <button data-filter="lower" class="filter-btn">Lower Body</button>
+                 <button data-filter="eccentric" class="filter-btn">Eccentric (Downhill)</button>
+                 <button data-filter="plyo" class="filter-btn">Plyometrics (Power)</button>
+                 <button data-filter="balance" class="filter-btn">Balance & Proprioception</button>
             </div>
 
-            <div id="exercise-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div id="exercise-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 max-w-7xl mx-auto">
             </div>
         </section>
 
-        <section id="schedule" class="content-section">
-            <div class="text-center mb-12">
-                <h1 class="text-4xl md:text-5xl font-bold tracking-tight text-[#333C40] mb-4">Plan & Schedule Your Training</h1>
-                <p class="max-w-3xl mx-auto text-lg text-gray-600">Integrating strength work effectively requires planning. This section visualizes how to structure your training across a season and within a typical week to maximize gains and ensure recovery.</p>
+        <section id="schedule" class="section-padding" style="background-color: #EDF4F5;">
+            <div class="text-center max-w-5xl mx-auto mb-24">
+                <h1 class="text-5xl md:text-6xl font-bold tracking-tight text-[#2F4858] mb-10">Plan & Schedule Your Training</h1>
+                <p class="text-xl md:text-2xl text-gray-700 leading-relaxed max-w-4xl mx-auto">Integrating strength work effectively requires planning. This section visualizes how to structure your training across a season and within a typical week to maximize gains and ensure recovery, keeping you strong on the trails.</p>
             </div>
 
-             <div class="grid lg:grid-cols-5 gap-8">
-                 <div class="lg:col-span-3 bg-white p-6 md:p-8 rounded-lg shadow-md">
-                     <h2 class="text-2xl font-bold text-center text-[#333C40] mb-2">The Four Phases of Periodization</h2>
-                     <p class="text-center text-gray-600 max-w-2xl mx-auto mb-6">Effective training varies volume and intensity throughout the year. Lower intensity and higher volume build a base, while higher intensity and lower volume prepare you for peak performance.</p>
+             <div class="grid lg:grid-cols-5 gap-10 max-w-7xl mx-auto">
+                 <div class="lg:col-span-3 card p-10 md:p-12">
+                     <h2 class="text-3xl md:text-4xl font-bold text-center text-[#2F4858] mb-6">The Four Phases of Periodization</h2>
+                     <p class="text-center text-gray-700 text-xl max-w-3xl mx-auto mb-10 leading-relaxed">Effective training varies volume and intensity throughout the year. Understand how lower intensity and higher volume build a base, while higher intensity and lower volume prepare you for peak performance.</p>
                     <div class="chart-container" style="max-width: 700px;">
                         <canvas id="periodizationChart"></canvas>
                     </div>
                 </div>
 
-                 <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
-                    <h3 class="text-2xl font-bold text-center text-[#333C40] mb-6">Sample Training Week: Works to be Done</h3>
-                    <div id="workout-checklist" class="space-y-4">
+                 <div class="lg:col-span-2 card p-8">
+                    <h3 class="text-3xl font-bold text-center text-[#2F4858] mb-8">Sample Training Week: Your Works to be Done</h3>
+                    <div id="workout-checklist" class="space-y-6">
                         <!-- Workout items will be dynamically inserted here -->
                     </div>
                  </div>
@@ -236,9 +383,10 @@
         </section>
     </main>
 
-    <footer class="bg-white mt-12 border-t border-gray-200">
-        <div class="container mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-gray-500 text-sm">
-            <p>An Interactive Guide to Strength & Conditioning for Trail Runners.</p>
+    <footer class="bg-[#2F4858] text-[#E0EBF0] mt-28 py-14">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm">
+            <p>&copy; 2025 Trail Strong. All rights reserved.</p>
+            <p class="mt-2">An Interactive Guide to Strength & Conditioning for Trail Runners.</p>
             <p>Content adapted from "The Trail Runner's Comprehensive Strength & Conditioning Guide".</p>
         </div>
     </footer>
@@ -346,9 +494,12 @@
             const exerciseGrid = document.getElementById('exercise-grid');
             const filterContainer = document.getElementById('filter-container');
             const navLinks = document.querySelectorAll('.nav-link');
-            const mobileNav = document.getElementById('mobile-nav');
-            const contentSections = document.querySelectorAll('.content-section');
-            const workoutChecklist = document.getElementById('workout-checklist');
+            const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
+            const hamburgerIcon = document.getElementById('hamburger-icon');
+            const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
+            const mobileMenuCloseBtn = document.getElementById('mobile-menu-close-btn');
+            const contentSections = document.querySelectorAll('section[id]'); 
+
 
             function displayExercises(filter) {
                 exerciseGrid.innerHTML = '';
@@ -358,9 +509,9 @@
 
                 filteredExercises.forEach(ex => {
                     const card = document.createElement('div');
-                    card.className = 'exercise-card bg-white p-6 rounded-lg shadow-sm';
+                    card.className = 'exercise-card card p-6';
                     card.innerHTML = `
-                        <h4 class="text-lg font-semibold text-[#008080] mb-2">${ex.name}</h4>
+                        <h4 class="text-lg font-semibold text-[#2F4858] mb-2">${ex.name}</h4>
                         <p class="text-sm text-gray-600">${ex.desc}</p>
                     `;
                     exerciseGrid.appendChild(card);
@@ -368,19 +519,24 @@
             }
 
             function displayWorkouts() {
+                const workoutChecklist = document.getElementById('workout-checklist'); 
+                if (!workoutChecklist) {
+                    console.error('Error: workout-checklist element not found!');
+                    return; 
+                }
                 workoutChecklist.innerHTML = '';
                 workouts.forEach((workout, index) => {
                     const workoutItem = document.createElement('div');
-                    workoutItem.className = `p-4 rounded-md ${workout.isRest ? 'bg-[#E0F2F2]' : 'bg-[#E6F5EC]'} workout-item`; /* Very light teal or very light green */
+                    workoutItem.className = `workout-item card p-4 ${workout.isRest ? 'bg-[#EAF0F0]' : 'bg-[#F5F8F8]'}`; /* Lighter background for items */
                     
                     let exercisesHtml = '';
                     if (workout.dailyExercises && workout.dailyExercises.length > 0) {
                         exercisesHtml = `
                             <div class="exercise-detail-list space-y-2 text-sm text-gray-700">
-                                <p class="font-semibold text-[#333C40]">Daily Exercises:</p>
+                                <p class="font-semibold text-[#2F4858]">Daily Exercises:</p>
                                 ${workout.dailyExercises.map(ex => `
-                                    <div class="flex items-start space-x-2">
-                                        <span class="text-[#008080]">&bull;</span>
+                                    <div class="flex items-start space-x-3">
+                                        <span class="text-[#1A5276]">&bull;</span>
                                         <div>
                                             <p class="font-medium">${ex.name} <span class="text-gray-500">(${ex.sets_reps})</span></p>
                                             <p class="text-xs text-gray-500">${ex.desc}</p>
@@ -401,7 +557,7 @@
                         <div class="summary flex items-center justify-between" data-index="${index}">
                             <div class="flex items-start">
                                 <div>
-                                    <p class="font-bold workout-title ${workout.isRest ? 'text-[#FF7F50]' : 'text-[#008080]'}">${workout.day}: ${workout.title}</p>
+                                    <p class="font-bold workout-title ${workout.isRest ? 'text-[#FF6B6B]' : 'text-[#2F4858]'}">${workout.day}: ${workout.title}</p>
                                     <p class="text-sm workout-desc text-gray-600">${workout.desc}</p>
                                 </div>
                             </div>
@@ -424,44 +580,65 @@
                 });
             }
 
+            // Mobile Menu Toggle
+            hamburgerIcon.addEventListener('click', () => {
+                mobileMenuOverlay.classList.add('open');
+                hamburgerIcon.classList.add('open');
+            });
+
+            mobileMenuCloseBtn.addEventListener('click', () => {
+                mobileMenuOverlay.classList.remove('open');
+                hamburgerIcon.classList.remove('open');
+            });
+
+            mobileNavLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    mobileMenuOverlay.classList.remove('open');
+                    hamburgerIcon.classList.remove('open');
+                });
+            });
+
+
+            // Active Nav Link on Scroll 
+            function updateActiveNavLink() {
+                let currentActiveSection = 'home';
+                contentSections.forEach(section => {
+                    const sectionTop = section.offsetTop - 100; 
+                    const sectionBottom = sectionTop + section.offsetHeight;
+                    if (window.scrollY >= sectionTop && window.scrollY < sectionBottom) {
+                        currentActiveSection = section.id;
+                    }
+                });
+
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href').substring(1) === currentActiveSection) {
+                        link.classList.add('active');
+                    }
+                });
+                mobileNavLinks.forEach(link => {
+                     link.classList.remove('active');
+                     if (link.getAttribute('href').substring(1) === currentActiveSection) {
+                         link.classList.add('active');
+                     }
+                });
+            }
+
+            window.addEventListener('scroll', updateActiveNavLink);
+            updateActiveNavLink(); /* Initial call on load */
+
 
             filterContainer.addEventListener('click', (e) => {
                 if (e.target.tagName === 'BUTTON') {
-                    document.querySelector('.filter-btn.active').classList.remove('active');
+                    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
                     e.target.classList.add('active');
                     const filter = e.target.getAttribute('data-filter');
                     displayExercises(filter);
                 }
             });
 
-            function switchTab(targetId) {
-                contentSections.forEach(section => {
-                    section.classList.toggle('active', section.id === targetId);
-                });
-
-                navLinks.forEach(link => {
-                    link.classList.toggle('active', link.getAttribute('data-target') === targetId);
-                });
-                
-                if (mobileNav.value !== targetId) {
-                    mobileNav.value = targetId;
-                }
-
-                window.scrollTo(0, 0);
-            }
-
-            navLinks.forEach(link => {
-                link.addEventListener('click', (e) => {
-                    switchTab(e.target.getAttribute('data-target'));
-                });
-            });
-            
-            mobileNav.addEventListener('change', (e) => {
-                switchTab(e.target.value);
-            });
-
             displayExercises('all');
-            displayWorkouts(); // Initialize the workout checklist
+            displayWorkouts(); 
 
             const fitnessCtx = document.getElementById('fitnessComponentsChart').getContext('2d');
             new Chart(fitnessCtx, {
@@ -472,12 +649,12 @@
                         label: 'Importance for Trail Running',
                         data: [9, 10, 9, 8, 10],
                         fill: true,
-                        backgroundColor: 'rgba(0, 128, 128, 0.2)', /* Deep Teal */
-                        borderColor: 'rgb(0, 128, 128)', /* Deep Teal */
-                        pointBackgroundColor: 'rgb(0, 128, 128)', /* Deep Teal */
+                        backgroundColor: 'rgba(255, 107, 107, 0.2)', /* Bright Coral */
+                        borderColor: 'rgb(255, 107, 107)', /* Bright Coral */
+                        pointBackgroundColor: 'rgb(255, 107, 107)', /* Bright Coral */
                         pointBorderColor: '#fff',
                         pointHoverBackgroundColor: '#fff',
-                        pointHoverBorderColor: 'rgb(0, 128, 128)' /* Deep Teal */
+                        pointHoverBorderColor: 'rgb(255, 107, 107)' /* Bright Coral */
                     }]
                 },
                 options: {
@@ -485,15 +662,15 @@
                     maintainAspectRatio: false,
                     scales: {
                         r: {
-                            angleLines: { color: 'rgba(51, 60, 64, 0.2)' }, /* Dark muted grey-blue */
-                            grid: { color: 'rgba(51, 60, 64, 0.2)' }, /* Dark muted grey-blue */
+                            angleLines: { color: 'rgba(47, 72, 88, 0.2)' }, /* Deep blue-grey */
+                            grid: { color: 'rgba(47, 72, 88, 0.2)' }, /* Deep blue-grey */
                             pointLabels: { 
                                 font: { size: 12 },
-                                color: '#333C40' /* Dark muted grey-blue */
+                                color: '#2F4858' /* Deep blue-grey */
                             },
                             ticks: {
-                                backdropColor: '#F8F8F8', /* Light neutral grey */
-                                color: '#6C757D' /* Muted grey for ticks */
+                                backdropColor: '#F8FBF8', /* Very light, cool grey-green */
+                                color: '#556B7B' /* Muted blue-grey */
                             },
                              min: 0,
                              max: 10
@@ -516,15 +693,15 @@
                         {
                             label: 'Training Volume',
                             data: [9, 7, 5, 2],
-                            backgroundColor: 'rgba(0, 128, 128, 0.6)', /* Deep Teal */
-                            borderColor: 'rgba(0, 128, 128, 1)', /* Deep Teal */
+                            backgroundColor: 'rgba(255, 107, 107, 0.6)', /* Bright Coral */
+                            borderColor: 'rgba(255, 107, 107, 1)', /* Bright Coral */
                             borderWidth: 1
                         },
                         {
                             label: 'Training Intensity',
                             data: [4, 8, 6, 2],
-                            backgroundColor: 'rgba(255, 127, 80, 0.6)', /* Soft Coral */
-                            borderColor: 'rgba(255, 127, 80, 1)', /* Soft Coral */
+                            backgroundColor: 'rgba(26, 82, 118, 0.6)', /* Deep Blue-Green */
+                            borderColor: 'rgba(26, 82, 118, 1)', /* Deep Blue-Green */
                             borderWidth: 1
                         }
                     ]
@@ -535,17 +712,17 @@
                     scales: {
                         y: {
                             beginAtZero: true,
-                            grid: { color: 'rgba(51, 60, 64, 0.1)' }, /* Dark muted grey-blue */
-                            ticks: { color: '#6C757D' } /* Muted grey for ticks */
+                            grid: { color: 'rgba(47, 72, 88, 0.1)' }, /* Deep blue-grey */
+                            ticks: { color: '#556B7B' } /* Muted blue-grey */
                         },
                         x: {
                             grid: { display: false },
-                            ticks: { color: '#333C40' } /* Dark muted grey-blue */
+                            ticks: { color: '#2F4858' } /* Deep blue-grey */
                         }
                     },
                     plugins: {
                         legend: {
-                           labels: { color: '#333C40' } /* Dark muted grey-blue */
+                           labels: { color: '#2F4858' } /* Deep blue-grey */
                         },
                         tooltip: {
                             mode: 'index',
