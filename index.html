@@ -72,11 +72,7 @@
             justify-content: space-between;
             align-items: center;
         }
-        .workout-item.completed .workout-title,
-        .workout-item.completed .workout-desc {
-            text-decoration: line-through;
-            color: #8A6F5D;
-        }
+        /* No more .completed class styling for line-through as checkboxes are removed */
         .exercise-detail-list {
             display: none;
             margin-top: 1rem;
@@ -397,10 +393,9 @@
 
                     workoutItem.innerHTML = `
                         <div class="summary flex items-center justify-between" data-index="${index}">
-                            <div class="flex items-start space-x-3">
-                                <input type="checkbox" id="workout-${index}" class="mt-1 h-5 w-5 text-[#486358] border-gray-300 rounded focus:ring-[#486358]">
+                            <div class="flex items-start">
                                 <div>
-                                    <label for="workout-${index}" class="block font-bold workout-title ${workout.isRest ? 'text-[#C77D4A]' : 'text-[#486358]'}">${workout.day}: ${workout.title}</label>
+                                    <p class="font-bold workout-title ${workout.isRest ? 'text-[#C77D4A]' : 'text-[#486358]'}">${workout.day}: ${workout.title}</p>
                                     <p class="text-sm workout-desc text-gray-600">${workout.desc}</p>
                                 </div>
                             </div>
@@ -410,22 +405,14 @@
                     `;
                     workoutChecklist.appendChild(workoutItem);
 
-                    const checkbox = workoutItem.querySelector(`#workout-${index}`);
-                    checkbox.addEventListener('change', (e) => {
-                        workoutItem.classList.toggle('completed', e.target.checked);
-                    });
-
                     const summaryElement = workoutItem.querySelector('.summary');
                     const exerciseDetailList = workoutItem.querySelector('.exercise-detail-list');
                     const toggleIcon = workoutItem.querySelector('.toggle-icon');
 
                     if (summaryElement && exerciseDetailList && toggleIcon) {
                         summaryElement.addEventListener('click', (e) => {
-                            // Prevent toggle if the click was on the checkbox itself
-                            if (e.target.tagName !== 'INPUT') {
-                                exerciseDetailList.classList.toggle('active');
-                                toggleIcon.classList.toggle('rotated');
-                            }
+                            exerciseDetailList.classList.toggle('active');
+                            toggleIcon.classList.toggle('rotated');
                         });
                     }
                 });
