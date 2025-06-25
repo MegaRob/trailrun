@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Trail Runner's Strength Guide</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals with Earthy Accents -->
+    <!-- Application Structure Plan: A tab-based SPA design is chosen for optimal user navigation. It avoids a long scroll and allows users to jump directly to task-oriented sections: 'Why Strength Matters' (Home), 'Core Principles', an interactive 'Exercise Library', and a 'Plan & Schedule' visualizer. This structure breaks down the dense report into digestible, interactive modules, making the information more accessible and actionable for a trail runner who may want to quickly find specific exercises or scheduling advice without reading the entire document linearly. -->
+    <!-- Visualization & Content Choices: The application uses a combination of interactive elements to represent the report's content. A Radar Chart visualizes the five key components of fitness, offering a quick summary. A Bar Chart illustrates the abstract concept of periodization (volume vs. intensity), making it easier to understand. The core of the app is a filterable grid of exercise cards, allowing users to 'Organize' and 'Compare' exercises based on their goals (e.g., core, plyometrics). This interactive list (HTML/JS) is more user-friendly than the static lists in the report. Static text blocks are used for principles and summaries, presented in a clean card layout. This multi-faceted approach supports the designed task-oriented structure. The 'Plan & Schedule' section now includes an interactive "Works to be Done" checklist, enabling users to mark their daily workouts as complete, and the ability to click each day to view a detailed list of exercises. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FDFBF8; /* A very light, warm neutral */
+            color: #4B423C; /* Dark brown for text */
+        }
+        .nav-link {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link.active {
+            color: #C77D4A; /* Terracotta accent */
+            border-bottom-color: #C77D4A;
+        }
+        .nav-link:not(.active):hover {
+            color: #8A6F5D;
+            border-bottom-color: #8A6F5D;
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+        .exercise-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .exercise-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .filter-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .filter-btn.active {
+            background-color: #486358 !important; /* Muted Green */
+            color: #FDFBF8 !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .chart-container {
+            position: relative;
+            margin: auto;
+            height: 40vh;
+            width: 100%;
+            max-width: 500px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .workout-item .summary {
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .workout-item.completed .workout-title,
+        .workout-item.completed .workout-desc {
+            text-decoration: line-through;
+            color: #8A6F5D;
+        }
+        .exercise-detail-list {
+            display: none;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e0e0e0;
+        }
+        .exercise-detail-list.active {
+            display: block;
+        }
+        .toggle-icon {
+            transition: transform 0.2s ease-in-out;
+        }
+        .toggle-icon.rotated {
+            transform: rotate(90deg);
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-xl font-bold text-[#486358]">Trail Strong</span>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a data-target="home" class="nav-link px-3 py-2 rounded-md text-sm font-medium active">Why Strength Matters</a>
+                        <a data-target="principles" class="nav-link px-3 py-2 rounded-md text-sm font-medium">Core Principles</a>
+                        <a data-target="library" class="nav-link px-3 py-2 rounded-md text-sm font-medium">Exercise Library</a>
+                        <a data-target="schedule" class="nav-link px-3 py-2 rounded-md text-sm font-medium">Plan & Schedule</a>
+                    </div>
+                </div>
+                 <div class="md:hidden">
+                    <select id="mobile-nav" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-[#486358] focus:border-[#486358] block w-full p-2.5">
+                        <option value="home">Why Strength Matters</option>
+                        <option value="principles">Core Principles</option>
+                        <option value="library">Exercise Library</option>
+                        <option value="schedule">Plan & Schedule</option>
+                    </select>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto p-4 sm:p-6 lg:p-8">
+        
+        <section id="home" class="content-section active">
+            <div class="text-center mb-12">
+                <h1 class="text-4xl md:text-5xl font-bold tracking-tight text-[#4B423C] mb-4">Build a More Resilient Trail Runner</h1>
+                <p class="max-w-3xl mx-auto text-lg text-gray-600">Strength training isn't just an add-on; it's fundamental to improving performance, enhancing durability, and preventing injuries on the trail. This guide translates complex principles into actionable steps.</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8 mb-12 text-center">
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <div class="text-4xl mb-3 text-[#C77D4A]">▲</div>
+                    <h3 class="text-xl font-semibold mb-2 text-[#486358]">Enhanced Performance</h3>
+                    <p class="text-gray-600">Improve running economy, power up hills, and master technical descents with targeted strength work.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                     <div class="text-4xl mb-3 text-[#C77D4A]">⛨</div>
+                    <h3 class="text-xl font-semibold mb-2 text-[#486358]">Greater Durability</h3>
+                    <p class="text-gray-600">Build a robust body that resists fatigue, absorbs impact, and withstands the cumulative stress of long runs.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <div class="text-4xl mb-3 text-[#C77D4A]">✚</div>
+                    <h3 class="text-xl font-semibold mb-2 text-[#486358]">Reduced Injury Risk</h3>
+                    <p class="text-gray-600">Strengthen key muscles and stabilize joints to correct imbalances and protect against common running injuries.</p>
+                </div>
+            </div>
+            
+            <div class="bg-white p-6 md:p-8 rounded-lg shadow-md">
+                 <h2 class="text-2xl font-bold text-center text-[#4B423C] mb-2">Your Trail Fitness Profile</h2>
+                 <p class="text-center text-gray-600 max-w-2xl mx-auto mb-6">A balanced trail runner needs a combination of five key physical components. This interactive chart visualizes these areas. Our exercise library is designed to help you strengthen each one.</p>
+                <div class="chart-container">
+                    <canvas id="fitnessComponentsChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section id="principles" class="content-section">
+             <div class="text-center mb-12">
+                <h1 class="text-4xl md:text-5xl font-bold tracking-tight text-[#4B423C] mb-4">Foundational Training Principles</h1>
+                <p class="max-w-3xl mx-auto text-lg text-gray-600">Effective, long-term progress is built on a few core concepts. Understanding these principles allows you to train smarter, ensuring every workout moves you closer to your goals safely.</p>
+            </div>
+             <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <h3 class="text-xl font-semibold mb-2 text-[#486358]">Progressive Overload</h3>
+                    <p class="text-gray-600">The body must be consistently challenged with increasing demands to adapt and grow stronger. This can be achieved by adding weight, reps, or decreasing rest time.</p>
+                </div>
+                 <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <h3 class="text-xl font-semibold mb-2 text-[#486358]">Specificity</h3>
+                    <p class="text-gray-600">Training adaptations are specific to the stress imposed. Exercises should mimic the biomechanical and metabolic demands of trail running, focusing on unilateral movements.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <h3 class="text-xl font-semibold mb-2 text-[#486358]">Individualization</h3>
+                    <p class="text-gray-600">Every athlete is unique. A training program must be tailored to an individual's strengths, weaknesses, training history, and recovery capacity to be effective.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <h3 class="text-xl font-semibold mb-2 text-[#486358]">Recovery</h3>
+                    <p class="text-gray-600">Recovery is not passive; it's an active and indispensable component of progress. It's during rest that the body repairs, adapts, and gets stronger.</p>
+                </div>
+                 <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <h3 class="text-xl font-semibold mb-2 text-[#486358]">Periodization</h3>
+                    <p class="text-gray-600">A structured approach that varies training load and intensity over specific periods to optimize performance, prevent overtraining, and ensure continuous progress.</p>
+                </div>
+                 <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <h3 class="text-xl font-semibold mb-2 text-[#486358]">Kinetic Chain</h3>
+                    <p class="text-gray-600">The body functions as an integrated system. Strength in the feet, ankles, knees, hips, and core must work together for efficient, injury-free running.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="library" class="content-section">
+             <div class="text-center mb-8">
+                <h1 class="text-4xl md:text-5xl font-bold tracking-tight text-[#4B423C] mb-4">Interactive Exercise Library</h1>
+                <p class="max-w-3xl mx-auto text-lg text-gray-600">Find the right exercises for your needs. Use the filters below to explore movements that build core stability, lower body power, eccentric control, explosive agility, and balance.</p>
+            </div>
+            
+            <div id="filter-container" class="flex flex-wrap justify-center gap-2 mb-8">
+                 <button data-filter="all" class="filter-btn active bg-white text-[#486358] font-medium py-2 px-4 rounded-full border border-gray-200 hover:bg-gray-100">All Exercises</button>
+                 <button data-filter="core" class="filter-btn bg-white text-[#486358] font-medium py-2 px-4 rounded-full border border-gray-200 hover:bg-gray-100">Core Stability</button>
+                 <button data-filter="lower" class="filter-btn bg-white text-[#486358] font-medium py-2 px-4 rounded-full border border-gray-200 hover:bg-gray-100">Lower Body</button>
+                 <button data-filter="eccentric" class="filter-btn bg-white text-[#486358] font-medium py-2 px-4 rounded-full border border-gray-200 hover:bg-gray-100">Eccentric (Downhill)</button>
+                 <button data-filter="plyo" class="filter-btn bg-white text-[#486358] font-medium py-2 px-4 rounded-full border border-gray-200 hover:bg-gray-100">Plyometrics (Power)</button>
+                 <button data-filter="balance" class="filter-btn bg-white text-[#486358] font-medium py-2 px-4 rounded-full border border-gray-200 hover:bg-gray-100">Balance & Proprioception</button>
+            </div>
+
+            <div id="exercise-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            </div>
+        </section>
+
+        <section id="schedule" class="content-section">
+            <div class="text-center mb-12">
+                <h1 class="text-4xl md:text-5xl font-bold tracking-tight text-[#4B423C] mb-4">Plan & Schedule Your Training</h1>
+                <p class="max-w-3xl mx-auto text-lg text-gray-600">Integrating strength work effectively requires planning. This section visualizes how to structure your training across a season and within a typical week to maximize gains and ensure recovery.</p>
+            </div>
+
+             <div class="grid lg:grid-cols-5 gap-8">
+                 <div class="lg:col-span-3 bg-white p-6 md:p-8 rounded-lg shadow-md">
+                     <h2 class="text-2xl font-bold text-center text-[#4B423C] mb-2">The Four Phases of Periodization</h2>
+                     <p class="text-center text-gray-600 max-w-2xl mx-auto mb-6">Effective training varies volume and intensity throughout the year. Lower intensity and higher volume build a base, while higher intensity and lower volume prepare you for peak performance.</p>
+                    <div class="chart-container" style="max-width: 700px;">
+                        <canvas id="periodizationChart"></canvas>
+                    </div>
+                </div>
+
+                 <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold text-center text-[#4B423C] mb-6">Sample Training Week: Works to be Done</h3>
+                    <div id="workout-checklist" class="space-y-4">
+                        <!-- Workout items will be dynamically inserted here -->
+                    </div>
+                 </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-white mt-12 border-t border-gray-200">
+        <div class="container mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-gray-500 text-sm">
+            <p>An Interactive Guide to Strength & Conditioning for Trail Runners.</p>
+            <p>Content adapted from "The Trail Runner's Comprehensive Strength & Conditioning Guide".</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            const exercises = [
+                { name: 'Plank', category: 'core', desc: 'Builds foundational endurance in the abs, back, and shoulders for posture.' },
+                { name: 'Side Plank', category: 'core', desc: 'Targets obliques and hip abductors, critical for pelvic stability.' },
+                { name: 'Bird Dog', category: 'core', desc: 'Improves stability across the core and hips while coordinating opposite limbs.' },
+                { name: 'Dead Bug', category: 'core', desc: 'Develops deep core control without stressing the low back.' },
+                { name: 'Russian Twist', category: 'core', desc: 'Enhances rotational strength, key for navigating turns and uneven terrain.' },
+                { name: 'Goblet Squat', category: 'lower', desc: 'Develops total leg strength with an emphasis on quads and glutes.' },
+                { name: 'Deadlift', category: 'lower', desc: 'Builds powerful glutes and hamstrings, the engine for uphill running.' },
+                { name: 'Bulgarian Split Squat', category: ['lower', 'eccentric', 'balance'], desc: 'Excellent unilateral exercise for strength, stability, and eccentric control.' },
+                { name: 'Single-Leg Deadlift', category: ['lower', 'balance'], desc: 'Targets hamstrings and glutes while intensely challenging balance.' },
+                { name: 'Walking Lunge', category: 'lower', desc: 'Builds single-leg strength and stability in a dynamic, forward motion.' },
+                { name: 'Calf Raises', category: 'lower', desc: 'Strengthens calves for powerful push-offs and ankle stability.' },
+                { name: 'Hip Thrust', category: 'lower', desc: 'Isolates and strengthens the glutes, crucial for powerful hip extension.' },
+                { name: 'Step-ups', category: 'lower', desc: 'Mimics climbing, building powerful quads and glutes for ascents.' },
+                { name: 'Slow Squat (Eccentric)', category: 'eccentric', desc: 'Focuses on the lowering phase to build quadriceps braking strength.' },
+                { name: 'Step-downs', category: 'eccentric', desc: 'Directly simulates the eccentric control needed for downhill running.' },
+                { name: 'Reverse Nordic Curls', category: 'eccentric', desc: 'Intense eccentric loading for the quadriceps to absorb impact.' },
+                { name: 'Wall Sit', category: 'eccentric', desc: 'Builds isometric strength in the quads, essential for long descents.' },
+                { name: 'Box Jumps', category: 'plyo', desc: 'Develops explosive power in the entire lower body for climbs and sprints.' },
+                { name: 'Jumping Lunges', category: 'plyo', desc: 'Builds single-leg explosive power and enhances coordination.' },
+                { name: 'Lateral Jumps (Skater)', category: 'plyo', desc: 'Develops multi-directional power and stability for technical trails.' },
+                { name: 'Squat Jumps', category: 'plyo', desc: 'A foundational plyometric for improving vertical power and reactivity.' },
+                { name: 'Single-Leg Pogo Hops', category: 'plyo', desc: 'Builds stiffness and reactivity in the ankle and calf complex.' },
+                { name: 'Single-Leg Balance', category: ['balance'], desc: 'The fundamental exercise for improving proprioception and stability.' },
+                { name: 'Balance with Eyes Closed', category: 'balance', desc: 'Removes visual input, forcing deeper reliance on proprioceptors.' },
+                { name: 'Lunge to Knee Lift', category: 'balance', desc: 'Challenges balance through a dynamic range of motion.' },
+                { name: 'Kettlebell Around the World', category: 'balance', desc: 'Creates instability to challenge and strengthen ankle stabilizers.' },
+            ];
+
+            const workouts = [
+                {
+                    day: 'Monday',
+                    title: 'Lower Body & Core Strength',
+                    desc: 'Focus on foundational, unilateral movements.',
+                    isRest: false,
+                    dailyExercises: [
+                        { name: 'Goblet Squat', sets_reps: '3 sets of 8-12 reps', desc: 'Develops total leg strength with an emphasis on quads and glutes.' },
+                        { name: 'Bulgarian Split Squat', sets_reps: '3 sets of 8-12 reps per leg', desc: 'Excellent unilateral exercise for strength, stability, and eccentric control.' },
+                        { name: 'Plank', sets_reps: '3 sets, hold 30-60 sec', desc: 'Builds foundational endurance in the abs, back, and shoulders for posture.' },
+                        { name: 'Bird Dog', sets_reps: '3 sets of 10-15 reps per side', desc: 'Improves stability across the core and hips while coordinating opposite limbs.' }
+                    ]
+                },
+                {
+                    day: 'Tuesday',
+                    title: 'Easy Endurance Run',
+                    desc: 'Aerobic base building and recovery.',
+                    isRest: false,
+                    dailyExercises: [{ name: 'Easy Run', sets_reps: '45-60 minutes', desc: 'Maintain conversational pace, focus on recovery.' }]
+                },
+                {
+                    day: 'Wednesday',
+                    title: 'Upper Body & Functional Strength',
+                    desc: 'Supports posture, arm drive, and stability.',
+                    isRest: false,
+                    dailyExercises: [
+                        { name: 'Push-ups', sets_reps: '3 sets of 8-15 reps', desc: 'Strengthens chest, shoulders, and triceps, supporting arm drive.' },
+                        { name: 'Rows (Dumbbell or Band)', sets_reps: '3 sets of 8-12 reps', desc: 'Works back muscles for posture and pulling strength.' },
+                        { name: 'Overhead Press (Dumbbell)', sets_reps: '3 sets of 8-12 reps', desc: 'Builds shoulder strength, important for uphill posture and carrying packs.' },
+                        { name: 'Side Plank', sets_reps: '3 sets, hold 30-60 sec per side', desc: 'Targets obliques and hip abductors, critical for pelvic stability.' }
+                    ]
+                },
+                {
+                    day: 'Thursday',
+                    title: 'Moderate/Tempo Run',
+                    desc: 'Higher intensity running session.',
+                    isRest: false,
+                    dailyExercises: [{ name: 'Tempo Run', sets_reps: '4-6 miles with 2-3 miles at tempo pace', desc: 'Develops lactate threshold and sustained speed.' }]
+                },
+                {
+                    day: 'Friday',
+                    title: 'Rest or Active Recovery',
+                    desc: 'Crucial for muscle repair and adaptation.',
+                    isRest: true,
+                    dailyExercises: [
+                        { name: 'Foam Rolling/Stretching', sets_reps: '20-30 minutes', desc: 'Improves flexibility and reduces muscle soreness.' },
+                        { name: 'Light Walk', sets_reps: '20-30 minutes', desc: 'Promotes blood flow without intense effort.' }
+                    ]
+                },
+                {
+                    day: 'Saturday',
+                    title: 'Long Trail Run',
+                    desc: 'Primary weekly workout on varied terrain.',
+                    isRest: false,
+                    dailyExercises: [{ name: 'Long Trail Run', sets_reps: '2-4 hours', desc: 'Builds endurance and practices trail-specific skills.' }]
+                },
+                {
+                    day: 'Sunday',
+                    title: 'Rest or Light Cross-Training',
+                    desc: 'Promotes blood flow and flexibility.',
+                    isRest: true,
+                    dailyExercises: [
+                        { name: 'Yoga or Pilates', sets_reps: '30-60 minutes', desc: 'Enhances flexibility, core strength, and body awareness.' },
+                        { name: 'Cycling or Swimming', sets_reps: '45-60 minutes', desc: 'Low-impact aerobic activity for active recovery.' }
+                    ]
+                }
+            ];
+
+            const exerciseGrid = document.getElementById('exercise-grid');
+            const filterContainer = document.getElementById('filter-container');
+            const navLinks = document.querySelectorAll('.nav-link');
+            const mobileNav = document.getElementById('mobile-nav');
+            const contentSections = document.querySelectorAll('.content-section');
+            const workoutChecklist = document.getElementById('workout-checklist');
+
+            function displayExercises(filter) {
+                exerciseGrid.innerHTML = '';
+                const filteredExercises = filter === 'all'
+                    ? exercises
+                    : exercises.filter(ex => Array.isArray(ex.category) ? ex.category.includes(filter) : ex.category === filter);
+
+                filteredExercises.forEach(ex => {
+                    const card = document.createElement('div');
+                    card.className = 'exercise-card bg-white p-6 rounded-lg shadow-sm';
+                    card.innerHTML = `
+                        <h4 class="text-lg font-semibold text-[#486358] mb-2">${ex.name}</h4>
+                        <p class="text-sm text-gray-600">${ex.desc}</p>
+                    `;
+                    exerciseGrid.appendChild(card);
+                });
+            }
+
+            function displayWorkouts() {
+                workoutChecklist.innerHTML = '';
+                workouts.forEach((workout, index) => {
+                    const workoutItem = document.createElement('div');
+                    workoutItem.className = `p-4 rounded-md ${workout.isRest ? 'bg-[#C77D4A]/10' : 'bg-[#F4F1ED]'} workout-item`;
+                    
+                    let exercisesHtml = '';
+                    if (workout.dailyExercises && workout.dailyExercises.length > 0) {
+                        exercisesHtml = `
+                            <div class="exercise-detail-list space-y-2 text-sm text-gray-700">
+                                <p class="font-semibold text-[#4B423C]">Daily Exercises:</p>
+                                ${workout.dailyExercises.map(ex => `
+                                    <div class="flex items-start space-x-2">
+                                        <span class="text-[#486358]">&bull;</span>
+                                        <div>
+                                            <p class="font-medium">${ex.name} <span class="text-gray-500">(${ex.sets_reps})</span></p>
+                                            <p class="text-xs text-gray-500">${ex.desc}</p>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `;
+                    } else {
+                        exercisesHtml = `
+                            <div class="exercise-detail-list text-sm text-gray-700 mt-2 pt-2 border-t border-gray-200">
+                                <p>No specific strength exercises planned for this day, focus on run/recovery.</p>
+                            </div>
+                        `;
+                    }
+
+                    workoutItem.innerHTML = `
+                        <div class="summary flex items-center justify-between" data-index="${index}">
+                            <div class="flex items-start space-x-3">
+                                <input type="checkbox" id="workout-${index}" class="mt-1 h-5 w-5 text-[#486358] border-gray-300 rounded focus:ring-[#486358]">
+                                <div>
+                                    <label for="workout-${index}" class="block font-bold workout-title ${workout.isRest ? 'text-[#C77D4A]' : 'text-[#486358]'}">${workout.day}: ${workout.title}</label>
+                                    <p class="text-sm workout-desc text-gray-600">${workout.desc}</p>
+                                </div>
+                            </div>
+                            <span class="toggle-icon text-gray-500 text-lg">&rsaquo;</span>
+                        </div>
+                        ${exercisesHtml}
+                    `;
+                    workoutChecklist.appendChild(workoutItem);
+
+                    const checkbox = workoutItem.querySelector(`#workout-${index}`);
+                    checkbox.addEventListener('change', (e) => {
+                        workoutItem.classList.toggle('completed', e.target.checked);
+                    });
+
+                    const summaryElement = workoutItem.querySelector('.summary');
+                    const exerciseDetailList = workoutItem.querySelector('.exercise-detail-list');
+                    const toggleIcon = workoutItem.querySelector('.toggle-icon');
+
+                    if (summaryElement && exerciseDetailList && toggleIcon) {
+                        summaryElement.addEventListener('click', (e) => {
+                            // Prevent toggle if the click was on the checkbox itself
+                            if (e.target.tagName !== 'INPUT') {
+                                exerciseDetailList.classList.toggle('active');
+                                toggleIcon.classList.toggle('rotated');
+                            }
+                        });
+                    }
+                });
+            }
+
+
+            filterContainer.addEventListener('click', (e) => {
+                if (e.target.tagName === 'BUTTON') {
+                    document.querySelector('.filter-btn.active').classList.remove('active');
+                    e.target.classList.add('active');
+                    const filter = e.target.getAttribute('data-filter');
+                    displayExercises(filter);
+                }
+            });
+
+            function switchTab(targetId) {
+                contentSections.forEach(section => {
+                    section.classList.toggle('active', section.id === targetId);
+                });
+
+                navLinks.forEach(link => {
+                    link.classList.toggle('active', link.getAttribute('data-target') === targetId);
+                });
+                
+                if (mobileNav.value !== targetId) {
+                    mobileNav.value = targetId;
+                }
+
+                window.scrollTo(0, 0);
+            }
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    switchTab(e.target.getAttribute('data-target'));
+                });
+            });
+            
+            mobileNav.addEventListener('change', (e) => {
+                switchTab(e.target.value);
+            });
+
+            displayExercises('all');
+            displayWorkouts(); // Initialize the workout checklist
+
+            const fitnessCtx = document.getElementById('fitnessComponentsChart').getContext('2d');
+            new Chart(fitnessCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['Core Stability', 'Lower Body Strength', 'Eccentric Control', 'Plyometric Power', 'Balance & Proprioception'],
+                    datasets: [{
+                        label: 'Importance for Trail Running',
+                        data: [9, 10, 9, 8, 10],
+                        fill: true,
+                        backgroundColor: 'rgba(72, 99, 88, 0.2)',
+                        borderColor: 'rgb(72, 99, 88)',
+                        pointBackgroundColor: 'rgb(72, 99, 88)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgb(72, 99, 88)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { color: 'rgba(75, 66, 60, 0.2)' },
+                            grid: { color: 'rgba(75, 66, 60, 0.2)' },
+                            pointLabels: { 
+                                font: { size: 12 },
+                                color: '#4B423C'
+                            },
+                            ticks: {
+                                backdropColor: '#FDFBF8',
+                                color: '#8A6F5D'
+                            },
+                             min: 0,
+                             max: 10
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+
+            const periodizationCtx = document.getElementById('periodizationChart').getContext('2d');
+            new Chart(periodizationCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Off-Season (Base)', 'Pre-Season (Build)', 'In-Season (Maintain)', 'Taper (Peak)'],
+                    datasets: [
+                        {
+                            label: 'Training Volume',
+                            data: [9, 7, 5, 2],
+                            backgroundColor: 'rgba(199, 125, 74, 0.6)',
+                            borderColor: 'rgba(199, 125, 74, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Training Intensity',
+                            data: [4, 8, 6, 2],
+                            backgroundColor: 'rgba(72, 99, 88, 0.6)',
+                            borderColor: 'rgba(72, 99, 88, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(75, 66, 60, 0.1)' },
+                            ticks: { color: '#8A6F5D' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#4B423C' }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                           labels: { color: '#4B423C' }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    }
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
